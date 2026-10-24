@@ -1,66 +1,41 @@
-// Service worker: tallentaa sovelluksen tiedostot, jotta se toimii ilman verkkoa.
-// Kun muutat jotain tiedostoa, kasvata VERSION-numeroa, niin puhelin hakee uudet tiedostot.
-const VERSION = 'v4';
-const CACHE = 'tyovuorot-' + VERSION;
+// Vaihda versionumero (v2 -> v3...) aina kun päivität sovelluksen tiedostoja.
+// Vain tämän sovelluksen omat välimuistit poistetaan, ei muiden saman osoitteen sovellusten.
+const PREFIX = 'treenipaivakirja-';
+const VERSION = PREFIX + 'v2';
 const FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './css/tailwind.css',
-  './css/fontawesome.css',
-  './webfonts/fa-solid-900.woff2',
-  './lib/pdf.min.mjs',
-  './lib/pdf.worker.min.mjs',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-maskable-512.png'
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
+self.addEventListener('activate', e => {
+  e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('tyovuorot-') && k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k.startsWith(PREFIX) && k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', event => {
-  const req = event.request;
+// Näytä heti välimuistista (toimii offline), päivitä taustalla verkosta.
+self.addEventListener('fetch', e => {
+  const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-
-  // Sivu: verkosta jos mahdollista (saa päivitykset heti), muuten välimuistista
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put('./index.html', copy));
+  e.respondWith(
+    caches.open(VERSION).then(async cache => {
+      const cached = await cache.match(req, { ignoreSearch: true });
+      const network = fetch(req).then(res => {
+        if (res && res.ok) cache.put(req, res.clone());
         return res;
-      }).catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
-
-  // Muut tiedostot: välimuistista, ja jos puuttuu, verkosta
-  event.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copy));
-      return res;
-    }))
-  );
-});
-
-// Ilmoituksen napautus avaa (tai tuo esiin) sovelluksen
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      for (const c of list) { if ('focus' in c) return c.focus(); }
-      return self.clients.openWindow('./index.html');
+      }).catch(() => null);
+      return cached || (await network) || (req.mode === 'navigate' ? cache.match('./index.html') : Response.error());
     })
   );
 });

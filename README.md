@@ -13,7 +13,7 @@ Tiedostot: `index.html`, `manifest.webmanifest`, `sw.js`, `icons/`.
 - **iPhone / Safari:** Jaa-painike → *Lisää Koti-valikkoon*.
 
 ## Päivittäminen
-Kun muutat tiedostoja, vaihda `sw.js`-tiedoston alussa oleva `VERSION` (esim. `treeni-v2`).
+Kun muutat tiedostoja, vaihda `sw.js`-tiedoston alussa oleva `VERSION` (esim. `PREFIX + 'v3'`).
 Uusi versio latautuu taustalla ja tulee käyttöön, kun sovelluksen sulkee ja avaa uudelleen.
 
 ## Huomioita
