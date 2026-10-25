@@ -5,7 +5,7 @@
   "lang": "fi",
   "start_url": "./",
   "scope": "./",
-  "id": "treenipaivakirja-pwa",
+  "id": "treenipaivakirja-app-v2",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0e1014",

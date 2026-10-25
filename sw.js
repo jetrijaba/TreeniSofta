@@ -1,7 +1,7 @@
 // Vaihda versionumero (v2 -> v3...) aina kun päivität sovelluksen tiedostoja.
 // Vain tämän sovelluksen omat välimuistit poistetaan, ei muiden saman osoitteen sovellusten.
 const PREFIX = 'treenipaivakirja-';
-const VERSION = PREFIX + 'v2';
+const VERSION = PREFIX + 'v3';
 const FILES = [
   './',
   './index.html',
